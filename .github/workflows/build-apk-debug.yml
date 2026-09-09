@@ -1,0 +1,74 @@
+name: Build APK Debug
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+      
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          api-level: 34
+          build-tools-version: '34.0.0'
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install npm dependencies
+        run: npm install
+      
+      - name: Build web app
+        run: npm run build
+      
+      - name: Sync Capacitor
+        run: npx cap sync android
+      
+      - name: List Android directory
+        run: ls -la android/
+      
+      - name: List app directory
+        run: ls -la android/app/
+      
+      - name: Check gradlew
+        run: ls -la android/gradlew && file android/gradlew
+      
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+      
+      - name: Check Gradle wrapper
+        working-directory: ./android
+        run: ./gradlew --version
+      
+      - name: Build APK with verbose output
+        working-directory: ./android
+        run: ./gradlew assembleRelease -v --stacktrace 2>&1 | tee build.log
+      
+      - name: Check build outputs
+        run: find android/app/build -name "*.apk" -type f 2>/dev/null || echo "Nenhum APK encontrado!"
+      
+      - name: Show build log
+        if: always()
+        run: cat android/build.log || echo "Sem log disponível"
+      
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: android/build.log
