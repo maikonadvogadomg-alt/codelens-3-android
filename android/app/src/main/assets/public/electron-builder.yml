@@ -1,0 +1,28 @@
+appId: com.codelens.app
+productName: CodeLens
+directories:
+  buildResources: assets
+  output: dist-electron
+files:
+  - dist/**/*
+  - electron/**/*
+  - package.json
+extraResources:
+  - from: dist-server/server.js
+    to: server.js
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: public/icons/icon-512.png
+mac:
+  target: dmg
+  icon: public/icons/icon-512.png
+linux:
+  target: AppImage
+  icon: public/icons/icon-512.png
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  installerLanguages:
+    - pt_BR

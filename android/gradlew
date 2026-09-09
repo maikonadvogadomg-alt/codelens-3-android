@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+# Gradle wrapper script — gerado automaticamente pelo APK Builder
+set -e
+GRADLE_VERSION="8.6"
+GRADLE_DIST_DIR="$HOME/.gradle/wrapper/dists"
+GRADLE_HOME="$GRADLE_DIST_DIR/gradle-$GRADLE_VERSION-bin/gradle-$GRADLE_VERSION"
+if [ ! -f "$GRADLE_HOME/bin/gradle" ]; then
+  echo "Baixando Gradle $GRADLE_VERSION..."
+  mkdir -p "$GRADLE_DIST_DIR/gradle-$GRADLE_VERSION-bin"
+  curl -fsSL "https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip" -o /tmp/gradle-dist.zip
+  unzip -q /tmp/gradle-dist.zip -d "$GRADLE_DIST_DIR/gradle-$GRADLE_VERSION-bin"
+  rm -f /tmp/gradle-dist.zip
+fi
+exec "$GRADLE_HOME/bin/gradle" "$@"

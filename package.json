@@ -1,0 +1,19 @@
+{
+  "name": "codelens-3",
+  "version": "1.0.3",
+  "private": true,
+  "scripts": {
+    "copy": "cap copy android",
+    "build": "cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "6.1.2",
+    "@capacitor/core": "6.1.2",
+    "@capacitor/preferences": "6.0.3",
+    "@capacitor-community/sqlite": "6.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "6.1.2",
+    "typescript": "5.4.5"
+  }
+}

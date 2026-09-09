@@ -1,0 +1,37 @@
+name: Build SK-Editor Windows (.exe)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Build frontend (Vite)
+        run: npm run build
+
+      - name: Build executavel Windows
+        run: npx electron-builder --win nsis --x64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload instalador .exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: SK-Editor-Instalador-Windows
+          path: dist/electron/*.exe
+          if-no-files-found: warn

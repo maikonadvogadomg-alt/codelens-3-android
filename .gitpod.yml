@@ -1,0 +1,25 @@
+image:
+  file: .gitpod.Dockerfile
+
+tasks:
+  - init: |
+      echo "=== Instalando Android SDK ==="
+      mkdir -p $HOME/android-sdk/cmdline-tools
+      curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o /tmp/cmdtools.zip
+      unzip -q /tmp/cmdtools.zip -d /tmp/cmdtools-ext
+      mv /tmp/cmdtools-ext/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+      rm -rf /tmp/cmdtools.zip /tmp/cmdtools-ext
+      export ANDROID_HOME=$HOME/android-sdk
+      export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+      yes | sdkmanager --licenses >/dev/null 2>&1
+      sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools" 2>&1 | tail -3
+      echo "export ANDROID_HOME=$HOME/android-sdk" >> ~/.bashrc
+      echo "export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools" >> ~/.bashrc
+      npm install
+      chmod +x android/gradlew
+    command: |
+      echo "✅ Ambiente pronto! Execute: ./build.sh"
+
+vscode:
+  extensions:
+    - vscjava.vscode-java-pack

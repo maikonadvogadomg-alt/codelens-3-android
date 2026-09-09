@@ -1,0 +1,22 @@
+{
+  "name": "Android APK Build",
+  "image": "mcr.microsoft.com/devcontainers/java:1-17",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20",
+      "nodeGypDependencies": false
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/setup-android.sh",
+  "remoteUser": "vscode",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  }
+}

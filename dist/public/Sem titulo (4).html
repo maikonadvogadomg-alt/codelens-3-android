@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversor de Ícone PNG para ICO</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .input-group {
+            margin: 20px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="file"] {
+            display: block;
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border-left: 4px solid #2196F3;
+        }
+        .success {
+            background: #c8e6c9;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border-left: 4px solid #4CAF50;
+            color: #2e7d32;
+        }
+        #preview {
+            max-width: 200px;
+            margin: 20px 0;
+            border: 2px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Conversor de Ícone</h1>
+        
+        <div class="info">
+            <strong>ℹ️ Como usar:</strong>
+            <ol>
+                <li>Selecione o arquivo PNG (icon-192.png ou icon-512.png)</li>
+                <li>Clique em "Converter para ICO"</li>
+                <li>O arquivo icon.ico será baixado</li>
+                <li>Coloque na pasta <strong>build/</strong> do seu projeto</li>
+            </ol>
+        </div>
+
+        <div class="input-group">
+            <label for="imageInput">Selecione a imagem PNG:</label>
+            <input type="file" id="imageInput" accept=".png" />
+        </div>
+
+        <img id="preview" style="display: none;" />
+
+        <button onclick="converterParaICO()">🔄 Converter para ICO</button>
+        <button onclick="converterParaPNG()">📥 Copiar PNG (alternativa)</button>
+
+        <div id="mensagem"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/png-to-ico@0.1.6/dist/index.js"></script>
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const preview = document.getElementById('preview');
+        const mensagem = document.getElementById('mensagem');
+
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    preview.src = event.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function converterParaICO() {
+            const file = imageInput.files[0];
+            if (!file) {
+                mostrarMensagem('❌ Selecione um arquivo PNG primeiro!', 'erro');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 256;
+                    canvas.height = 256;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, 256, 256);
+
+                    canvas.toBlob(function(blob) {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'icon.ico';
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        mostrarMensagem('✅ Arquivo icon.ico baixado! Coloque na pasta build/', 'sucesso');
+                    }, 'image/x-icon');
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function converterParaPNG() {
+            const file = imageInput.files[0];
+            if (!file) {
+                mostrarMensagem('❌ Selecione um arquivo PNG primeiro!', 'erro');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const a = document.createElement('a');
+                a.href = event.target.result;
+                a.download = 'icon.png';
+                a.click();
+                mostrarMensagem('✅ Arquivo icon.png baixado! Coloque na pasta build/', 'sucesso');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function mostrarMensagem(texto, tipo) {
+            mensagem.className = tipo === 'sucesso' ? 'success' : 'info';
+            mensagem.innerHTML = texto;
+        }
+    </script>
+</body>
+</html>
