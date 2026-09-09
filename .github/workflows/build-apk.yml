@@ -1,70 +1,108 @@
-name: Build Android APK
+name: Build APK & Windows
 
 on:
   push:
-    branches: [ main, master ]
-  workflow_dispatch:
+    branches: [ main, develop ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  build:
+  build-apk:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    name: Build APK
+    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: '8.6'
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android SDK platform 34
-        run: |
-          yes | sdkmanager --licenses > /dev/null 2>&1 || true
-          sdkmanager --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
-          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
-
+      - uses: actions/checkout@v3
+      
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+      
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build Web
+        run: npm run build
+      
+      - name: Sync Capacitor
+        run: npx cap sync android
+      
+      - name: Build APK Release
+        run: cd android && ./gradlew assembleRelease
+      
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: apk-release
+          path: android/app/build/outputs/apk/release/app-release.apk
 
-      - name: Install Capacitor
-        run: npm install --prefer-offline
-
-      - name: Copy web assets to Android
-        run: npx cap copy android
-
-      - name: Regenerar Gradle wrapper
-        working-directory: android
-        run: |
-          gradle wrapper --gradle-version 8.6 --distribution-type bin
-          chmod +x gradlew
-
-      - name: Build Debug APK
-        working-directory: android
-        timeout-minutes: 30
+  build-windows:
+    runs-on: windows-latest
+    name: Build Windows
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build App
+        run: npm run build
+      
+      - name: Build Electron
+        run: npm run electron:build
         env:
-          GRADLE_OPTS: "-Xmx3g -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8"
-          JAVA_TOOL_OPTIONS: "-Xmx3g"
-        run: ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tail -150
-
-      - name: Localizar APK gerado
-        run: find android -name "*.apk" | head -5
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Upload Windows Artifacts
+        uses: actions/upload-artifact@v3
         with:
-          name: codelens-3-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 30
+          name: windows-build
+          path: |
+            dist/*.exe
+            dist/*.yml
+
+  release:
+    needs: [build-apk, build-windows]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    name: Create Release
+    
+    steps:
+      - name: Download APK
+        uses: actions/download-artifact@v3
+        with:
+          name: apk-release
+      
+      - name: Download Windows
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-build
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            app-release.apk
+            *.exe
+            *.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
